@@ -1,0 +1,13 @@
+# 遊戲本體與原版資產（版權物，不進版控）
+*.exe
+*.EXE
+*.swf
+*.SWF
+*.dll
+*.DLL
+*.ocx
+*.zip
+*.CAB
+*.cab
+sounds/
+*.mp3

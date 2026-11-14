@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# MSN 原版 Hexic（旋轉泡泡球）— Ruffle 原生執行，已 patch 掉 MSN 主機握手
+set -u
+DIR="${HEXIC_DIR:-$HOME/Applications/Hexic}"
+RUFFLE="${RUFFLE_BIN:-$HOME/Applications/Ruffle/ruffle}"
+export DISPLAY="${DISPLAY:-:0}"
+
+# 已在跑就把視窗叫回前景，不要開第二個
+if pgrep -x ruffle >/dev/null 2>&1; then
+    WID=$(xdotool search --name "Ruffle" 2>/dev/null | head -1)
+    if [ -n "$WID" ]; then
+        xdotool windowactivate --sync "$WID" 2>/dev/null
+        xdotool windowraise "$WID" 2>/dev/null
+        exit 0
+    fi
+fi
+
+exec env WAYLAND_DISPLAY= "$RUFFLE" --graphics vulkan "$DIR/Hexic2.swf" "$@"

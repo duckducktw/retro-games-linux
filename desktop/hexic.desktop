@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Hexic (旋轉泡泡球)
+Name[en]=Hexic (MSN original)
+Comment=MSN 原版 Flash 遊戲，用 Ruffle 執行
+Exec=/home/user/.local/bin/hexic
+Icon=applications-games
+Terminal=false
+Categories=Game;PuzzleGame;
+StartupNotify=false

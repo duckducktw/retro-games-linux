@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Win95 FreeCell (同一個 Bottles bottle) — single-instance launcher
+set -u
+BOTTLE="${BOTTLE_NAME:-Solitaire}"
+
+if pgrep -f "[F]REECELL\.EXE" >/dev/null 2>&1; then
+    notify-send -a FreeCell "新接龍已在執行" "視窗請從工作列點開" 2>/dev/null || true
+    exit 0
+fi
+
+export DISPLAY="${DISPLAY:-:0}"
+exec flatpak run --command=bottles-cli com.usebottles.bottles \
+    run -b "$BOTTLE" -e 'C:\FreeCell\FREECELL.EXE'

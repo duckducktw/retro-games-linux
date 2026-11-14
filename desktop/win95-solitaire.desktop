@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=接龍 (Win95 Solitaire)
+Name[en]=Solitaire (Win95)
+Comment=Windows 95 Solitaire via Bottles
+Exec=/home/user/.local/bin/solitaire
+Icon=applications-games
+Terminal=false
+Categories=Game;CardGame;
+StartupNotify=false
