@@ -1,0 +1,11 @@
+# key	bottle	exe	title_en	title_zh	version	status
+sol9x	Solitaire	C:\Solitaire\SOL.EXE	Solitaire	接龍	Win95/98 (16-bit)	verified
+freecell9x	Solitaire	C:\FreeCell\FREECELL.EXE	FreeCell	新接龍	Win95/98 (16-bit)	verified
+winmine9x	Solitaire	C:\Minesweeper\winmine.exe	Minesweeper	踩地雷	Win95/98 (16-bit)	verified
+hearts9x	Solitaire	C:\Hearts\mshearts.exe	Hearts	傷心小棧	Win95/98 (32-bit)	verified
+solxp	WinXPGames	C:\XPgames\CARDS\sol.exe	Solitaire	接龍	Windows XP (32-bit)	verified
+freecellxp	WinXPGames	C:\XPgames\CARDS\freecell.exe	FreeCell	新接龍	Windows XP (32-bit)	verified
+winminexp	WinXPGames	C:\XPgames\MINESWEEPER\winmine.exe	Minesweeper	踩地雷	Windows XP (32-bit)	verified
+spiderxp	WinXPGames	C:\XPgames\CARDS\spider.exe	Spider Solitaire	連環新接龍	Windows XP (32-bit)	verified
+heartsxp	WinXPGames	C:\XPgames\CARDS\mshearts.exe	Hearts	傷心小棧	Windows XP (32-bit)	needs mfc42u.dll
+pinballexp	WinXPGames	C:\XPgames\PINBALL\PINBALL.EXE	3D Pinball Space Cadet	３Ｄ彈珠台	Windows XP (32-bit)	no window yet

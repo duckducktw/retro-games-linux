@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# 依 games.tsv 啟動指定的經典 Windows 遊戲
+# 用法：win-game <key> | win-game --list
+set -u
+MAP="${WIN_GAMES_TSV:-$HOME/.config/win-classic-games/games.tsv}"
+BOTTLES="${BOTTLES_CMD:-flatpak run --command=bottles-cli com.usebottles.bottles}"
+
+if [ "${1:-}" = "--list" ] || [ $# -eq 0 ]; then
+    awk -F'\t' '!/^#/ && NF>=7 {printf "%-12s %-12s %-38s %s\n", $1, $5, $3, $7}' "$MAP"
+    exit 0
+fi
+
+KEY="$1"
+LINE=$(awk -F'\t' -v k="$KEY" '!/^#/ && $1==k {print; exit}' "$MAP")
+if [ -z "$LINE" ]; then
+    echo "win-game: 未知的遊戲 key '$KEY'（用 --list 看清單）" >&2
+    exit 2
+fi
+
+BOTTLE=$(printf '%s' "$LINE" | cut -f2)
+EXE=$(printf '%s' "$LINE"    | cut -f3)
+BASE=$(basename "${EXE//\\//}")
+
+# 單實例：同一個瓶子裡同一支 exe 已在跑就別再開一個 session
+# （要連瓶子一起比對，否則 XP 的 sol.exe 會擋掉 Win98 的 SOL.EXE）
+if pgrep -f "[b]ottles-cli run -b $BOTTLE -e .*$BASE" >/dev/null 2>&1; then
+    notify-send -a "$KEY" "$BASE 已在執行" "視窗請從工作列點開" 2>/dev/null || true
+    exit 0
+fi
+
+export DISPLAY="${DISPLAY:-:0}"
+exec $BOTTLES run -b "$BOTTLE" -e "$EXE"

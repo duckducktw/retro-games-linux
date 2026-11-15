@@ -129,3 +129,31 @@ docs/        各遊戲的取得與修復紀錄
 ### 授權
 
 MIT，見 [LICENSE](LICENSE)。遊戲本體版權屬各自權利人，本 repo 不散布。
+
+## Classic Windows games (Win95/98 · XP · MSN Hexic)
+
+`win-game --list` lists every title; each entry maps to a bottle + original exe.
+
+| Game | Version | Status |
+|---|---|---|
+| Solitaire / FreeCell / Minesweeper / Hearts | Windows 95-98 (16-bit) | ✅ |
+| Solitaire / FreeCell / Minesweeper / Spider | Windows XP (32-bit) | ✅ |
+| Hearts (XP) | Windows XP | ⚠️ needs mfc42u.dll |
+| 3D Pinball Space Cadet (XP) | Windows XP | ⚠️ no window yet |
+| Hexic | MSN Flash original | ✅ patched SWF + Ruffle |
+
+Details, sources and known issues: [`docs/classic-win-games.md`](docs/classic-win-games.md)
+
+## 經典 Windows 遊戲（Win95/98 · XP · MSN Hexic）
+
+`win-game --list` 會列出全部；每個項目對應一個瓶子＋原版 exe。
+
+| 遊戲 | 版本 | 狀態 |
+|---|---|---|
+| 接龍 / 新接龍 / 踩地雷 / 傷心小棧 | Windows 95-98（16-bit） | ✅ |
+| 接龍 / 新接龍 / 踩地雷 / 連環新接龍 | Windows XP（32-bit） | ✅ |
+| 傷心小棧（XP） | Windows XP | ⚠️ 缺 mfc42u.dll |
+| ３Ｄ彈珠台（XP） | Windows XP | ⚠️ 尚無視窗 |
+| Hexic | MSN Flash 原版 | ✅ patch 過的 SWF + Ruffle |
+
+來源、安裝與已知問題：[`docs/classic-win-games.md`](docs/classic-win-games.md)
