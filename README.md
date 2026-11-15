@@ -1,159 +1,203 @@
 # retro-games-linux
 
+Run the **original** classic Windows games on Linux — Win95/98 16-bit games and Windows XP
+games inside [Bottles](https://usebottles.com/) (Wine), plus the original MSN **Hexic**
+Flash game through Ruffle.
+
+No game binaries are shipped here (they are copyrighted). This repo contains the launchers,
+the patch, and the notes needed to rebuild the setup from original media.
+
 [English](#english) | [繁體中文](#繁體中文)
 
-Running late-90s / early-2000s Windows and Flash games on Linux — using the
-**original binaries**, not remakes.
-
-| Game | Original source | Runtime |
-|---|---|---|
-| Solitaire (Win95) | `sol.exe` + `cards.dll` extracted from Win95 OSR2 CABs | Wine (Bottles `soda-9.0-1` runner, Win16 needs lib32) |
-| FreeCell (Win95) | `freecell.exe` from the same CABs | Same bottle, shares `cards.dll` |
-| Hexic (MSN original) | `Hexic2.swf` from Flashpoint / Flash Museum | Ruffle, SWF patched to drop the dead MSN host handshake |
-
-> This repo contains **no game data**. `*.exe` / `*.swf` / `*.dll` / `*.CAB` are
-> git-ignored; only launchers, patches and docs live here.
+---
 
 ## English
+
+### What's included
+
+| Game | Version | How it runs | Status |
+|---|---|---|---|
+| Solitaire | Win95/98, 16-bit `SOL.EXE` | Wine (`winevdm`) | ✅ |
+| FreeCell | Win95/98, 16-bit | Wine | ✅ |
+| Minesweeper | Win95/98 | Wine | ✅ |
+| Hearts | Win95/98 (needs `mfc40.dll`) | Wine | ✅ |
+| Solitaire | Windows XP, 32-bit | Wine | ✅ |
+| FreeCell | Windows XP | Wine | ✅ |
+| Minesweeper | Windows XP | Wine | ✅ |
+| Spider Solitaire | Windows XP | Wine | ✅ |
+| Hearts | Windows XP | Wine | ⚠️ needs `mfc42u.dll` |
+| 3D Pinball — Space Cadet | XP data + native engine | SpaceCadetPinball (Wine) | ✅ |
+| Hexic | MSN Flash original | Ruffle + patched SWF | ✅ |
+
+Full details, sources, controls and troubleshooting:
+**[`docs/classic-win-games.md`](docs/classic-win-games.md)** ·
+Hexic patch notes: **[`docs/hexic-msn-patch.md`](docs/hexic-msn-patch.md)**
+
+### Requirements
+
+* Bottles (`com.usebottles.bottles`) with runner **`soda-9.0-1`** (Wine 9 + lib32)
+* `cabextract`, `unzip`, `xdotool`, `xwininfo`
+* Ruffle (for Hexic), FFDec (only if you rebuild the Hexic patch)
+* Host Wine 10 alone is **not** enough — it is pure WoW64 and cannot start 16-bit apps
+
+### Quick start
+
+```bash
+git clone https://github.com/duckducktw/retro-games-linux
+cd retro-games-linux
+
+# 1. put the original files in place (see docs for download commands)
+#    sources/win9x/   sol.exe freecell.exe winmine.exe mshearts.exe cards.dll mfc40.dll
+#    sources/xp/      GAMES/CARDS/* GAMES/MINESWEEPER/* GAMES/PINBALL/*
+
+# 2. create the bottles and copy the games in
+./setup/build-bottles.sh sources
+
+# 3. install the launcher + desktop entries
+./install.sh
+
+# 4. play
+win-game --list
+win-game sol9x
+```
+
+### Usage
+
+```bash
+win-game --list          # every key, title, exe path, status
+win-game sol9x           # Win95/98 Solitaire
+win-game spiderxp        # XP Spider Solitaire
+pinball                  # 3D Pinball (native engine + original data)
+hexic                    # MSN Hexic
+```
+
+Each game also gets a desktop entry, so it shows up in the application menu.
+Running a launcher twice does **not** open a second copy — it brings the existing window
+to the front.
 
 ### Layout
 
 ```
-bin/         launchers (copy to ~/.local/bin, chmod +x)
-desktop/     .desktop entries (copy to ~/.local/share/applications)
-patch/       ActionScript patch + apply script for the MSN Hexic SWF
-docs/        acquisition / repair notes per game
+games.tsv                 # key, bottle, exe, titles, status
+bin/win-game              # generic launcher (--list / <key>)
+bin/pinball               # 3D Pinball launcher (handles the unmapped-window quirk)
+bin/hexic                 # MSN Hexic launcher (Ruffle)
+bin/solitaire, bin/freecell
+install.sh                # installs launcher + one .desktop per game
+setup/build-bottles.sh    # creates bottles, copies original game files from <sources-dir>
+desktop/                  # .desktop templates
+docs/classic-win-games.md # full guide: sources, bottles, controls, troubleshooting
+docs/hexic-msn-patch.md   # Hexic SWF patch explained
+patch/hexic-msn/          # the four patched ActionScript files + apply.sh
 ```
-
-### Requirements
-
-- **Wine via Bottles** (flatpak `com.usebottles.bottles`) with the `soda-9.0-1`
-  runner — the distro `wine` 10 package is pure wow64 and cannot run Win16 NE
-  executables at all.
-- **Ruffle** desktop build (nightly tarball from GitHub) for Flash content.
-- **FFDec** (`jpexs-decompiler`) + a JRE, only needed to rebuild the Hexic patch.
-- `xdotool` (window raise/activate in the Hexic launcher), `cabextract` for CABs.
-
-### Solitaire / FreeCell (Wine + Bottles)
-
-1. Create a bottle with the `soda-9.0-1` runner, then edit its `bottle.yml` and
-   set `Arch: win64`. Leaving `win32` there makes every launch abort with
-   `WINEARCH set to win32 but ... is a 64-bit installation` (silent, exit 0).
-2. Grab `WIN95_02.CAB` from archive.org item `win95hdd_202109` and extract:
-   `cabextract -F sol.exe -F freecell.exe -F cards.dll -d out WIN95_02.CAB`.
-3. Copy the files into the bottle as `C:\Solitaire\SOL.EXE`,
-   `C:\FreeCell\FREECELL.EXE`, plus `cards.dll` next to each game **and** into
-   `C:\windows\system32\` — without `cards.dll` you get missing card faces.
-4. Install the launchers: `cp bin/solitaire bin/freecell ~/.local/bin/ && chmod +x ~/.local/bin/{solitaire,freecell}`.
-
-### Hexic (Ruffle)
-
-See [`docs/hexic-msn-patch.md`](docs/hexic-msn-patch.md). Short version: the MSN
-SWF waits forever for `fscommand("ClientReady")` / `SessionReady` to be answered
-by the (long dead) `zone.msn.com` host, so it never leaves the splash screen.
-The patch removes the handshake and jumps straight to the main menu.
 
 ### Notes and gotchas
 
-- Screenshotting XWayland windows with `xwd` fails; use python-xlib
-  `get_image()` or `spectacle` instead. On a composited desktop, a fullscreen
-  app in front makes `root.get_image()` fail with `BadMatch`.
-- Never `pkill -f "Ruffle/ruffle"` from a shell whose own command line contains
-  that string — it kills the shell. Use `pgrep -x ruffle`.
-- Ruffle needs `--graphics vulkan` on some GPUs; `--graphics gl` may open no
-  window at all. Clearing `WAYLAND_DISPLAY` avoids a second failed surface path.
-- `file://` loading works for this SWF; no local HTTP server is needed.
+* Win95/98 games are 16-bit NE binaries and need `winevdm` from a runner that still ships
+  the 16-bit loader (`soda-9.0-1`). XP games are PE32 and run in a plain 64-bit prefix.
+* `cards.dll` must match the game generation — XP card backs differ from Win95 ones, which
+  is why the two generations live in separate bottles.
+* Wine renders face-down cards as thin lines and Minesweeper's LED digits as broken blocks.
+  Cosmetic only; the games are fully playable.
+* Wine needs headroom: with the machine near full RAM, windows silently fail to map and
+  `wineboot` hangs. See the troubleshooting section of the guide.
 
 ### License
 
-MIT — see [LICENSE](LICENSE). Game data remains the property of its respective
-owners and is not distributed here.
+MIT — see [LICENSE](LICENSE). Game binaries remain the property of their publishers and
+are **not** distributed here.
+
+---
 
 ## 繁體中文
 
-在 Linux 上跑 1990 末／2000 初的 Windows 與 Flash 遊戲，走**原版執行檔**路線，不用重製版。
+### 內容
 
-| 遊戲 | 原版來源 | 執行方式 |
-|---|---|---|
-| 接龍 (Win95) | Win95 OSR2 CAB 抽出的 `sol.exe` + `cards.dll` | Wine（Bottles `soda-9.0-1` runner，Win16 需要 lib32） |
-| 新接龍 (Win95) | 同一組 CAB 的 `freecell.exe` | 同一個 bottle，共用 `cards.dll` |
-| Hexic 旋轉泡泡球 (MSN 原版) | Flashpoint / Flash Museum 的 `Hexic2.swf` | Ruffle，SWF 已 patch 掉失效的 MSN 主機握手 |
+| 遊戲 | 版本 | 跑法 | 狀態 |
+|---|---|---|---|
+| 接龍 | Win95/98，16-bit `SOL.EXE` | Wine（`winevdm`） | ✅ |
+| 新接龍 | Win95/98，16-bit | Wine | ✅ |
+| 踩地雷 | Win95/98 | Wine | ✅ |
+| 傷心小棧 | Win95/98（需 `mfc40.dll`） | Wine | ✅ |
+| 接龍 | Windows XP，32-bit | Wine | ✅ |
+| 新接龍 | Windows XP | Wine | ✅ |
+| 踩地雷 | Windows XP | Wine | ✅ |
+| 連環新接龍 | Windows XP | Wine | ✅ |
+| 傷心小棧 | Windows XP | Wine | ⚠️ 缺 `mfc42u.dll` |
+| ３Ｄ彈珠台 | XP 資料 + 原生引擎 | SpaceCadetPinball（Wine） | ✅ |
+| Hexic | MSN Flash 原版 | Ruffle + patch 過的 SWF | ✅ |
 
-> 本 repo **不含遊戲本體**。`*.exe` / `*.swf` / `*.dll` / `*.CAB` 都在 `.gitignore`，
-> 只收啟動器、patch 與文件。
+完整說明（來源、瓶子設定、按鍵、疑難排解）：
+**[`docs/classic-win-games.md`](docs/classic-win-games.md)**
+Hexic patch 紀錄：**[`docs/hexic-msn-patch.md`](docs/hexic-msn-patch.md)**
+
+### 需求
+
+* Bottles（`com.usebottles.bottles`），runner 用 **`soda-9.0-1`**（Wine 9 + lib32）
+* `cabextract`、`unzip`、`xdotool`、`xwininfo`
+* Ruffle（Hexic 用）、FFDec（只有要重打 Hexic patch 才需要）
+* 只用 host Wine 10 不夠——它是純 WoW64，開不了 16-bit 程式
+
+### 快速開始
+
+```bash
+git clone https://github.com/duckducktw/retro-games-linux
+cd retro-games-linux
+
+# 1. 準備原版檔案（下載指令見 docs）
+#    sources/win9x/   sol.exe freecell.exe winmine.exe mshearts.exe cards.dll mfc40.dll
+#    sources/xp/      GAMES/CARDS/* GAMES/MINESWEEPER/* GAMES/PINBALL/*
+
+# 2. 建瓶子並把遊戲複製進去
+./setup/build-bottles.sh sources
+
+# 3. 裝啟動器與桌面捷徑
+./install.sh
+
+# 4. 開始玩
+win-game --list
+win-game sol9x
+```
+
+### 用法
+
+```bash
+win-game --list          # 列出所有 key、名稱、路徑、狀態
+win-game sol9x           # Win95/98 接龍
+win-game spiderxp        # XP 連環新接龍
+pinball                  # ３Ｄ彈珠台（原生引擎 + 原版資料）
+hexic                    # MSN Hexic
+```
+
+每支遊戲都會裝一個桌面捷徑，開始選單裡也搜得到。同一支連點兩次不會開第二個，
+只會把已開的視窗叫回前景。
 
 ### 目錄
 
 ```
-bin/         啟動器（複製到 ~/.local/bin 後 chmod +x）
-desktop/     .desktop 檔（複製到 ~/.local/share/applications）
-patch/       Hexic MSN 原版的 ActionScript patch 與套用腳本
-docs/        各遊戲的取得與修復紀錄
+games.tsv                 # key、瓶子、exe、名稱、狀態
+bin/win-game              # 通用啟動器（--list / <key>）
+bin/pinball               # 彈珠台啟動器（處理視窗 unmapped 的問題）
+bin/hexic                 # MSN Hexic 啟動器（Ruffle）
+bin/solitaire, bin/freecell
+install.sh                # 安裝啟動器＋每支遊戲一個 .desktop
+setup/build-bottles.sh    # 建瓶子、從 <sources-dir> 複製原版檔案
+desktop/                  # .desktop 範本
+docs/classic-win-games.md # 完整教學：來源、瓶子、按鍵、疑難排解
+docs/hexic-msn-patch.md   # Hexic SWF patch 說明
+patch/hexic-msn/          # 四個改過的 ActionScript 檔＋apply.sh
 ```
-
-### 需求
-
-- **Wine（透過 Bottles，flatpak `com.usebottles.bottles`）**，且要用 `soda-9.0-1`
-  runner——發行版套件的 wine 10 是純 wow64，**完全跑不動 Win16 NE 執行檔**。
-- **Ruffle** 桌面版（GitHub nightly tarball）用來跑 Flash 內容。
-- **FFDec**（`jpexs-decompiler`）＋ JRE，只有要重新產生 Hexic patch 時才需要。
-- `xdotool`（Hexic 啟動器叫回視窗用）、`cabextract`（解 CAB）。
-
-### 接龍 / 新接龍
-
-1. 用 `soda-9.0-1` runner 建 bottle，然後改 `bottle.yml` 把 `Arch:` 設成 `win64`。
-   留著 `win32` 會讓每次啟動都以 `WINEARCH set to win32 but ... is a 64-bit
-   installation` 無聲中止（exit 0、沒有視窗）。
-2. 從 archive.org `win95hdd_202109` 抓 `WIN95_02.CAB`，抽出檔案：
-   `cabextract -F sol.exe -F freecell.exe -F cards.dll -d out WIN95_02.CAB`。
-3. 放進 bottle：`C:\Solitaire\SOL.EXE`、`C:\FreeCell\FREECELL.EXE`，`cards.dll`
-   放在各遊戲旁**並且**再放一份到 `C:\windows\system32\`（少了它會缺牌面）。
-4. 安裝啟動器：`cp bin/solitaire bin/freecell ~/.local/bin/ && chmod +x ~/.local/bin/{solitaire,freecell}`。
-
-### Hexic（Ruffle）
-
-詳見 [`docs/hexic-msn-patch.md`](docs/hexic-msn-patch.md)。簡短版：MSN 版 SWF 開頭
-會一直送 `fscommand("ClientReady")` / `SessionReady`，等早就關站的 `zone.msn.com`
-主機回握手訊號，所以永遠停在 splash。patch 把握手整段拿掉，直接進主選單。
 
 ### 注意事項
 
-- XWayland 視窗用 `xwd` 抓圖會失敗，改用 python-xlib `get_image()` 或 `spectacle`。
-  桌面上有全螢幕程式蓋著時，`root.get_image()` 會噴 `BadMatch`。
-- 不要在指令列含同樣字串的 shell 裡跑 `pkill -f "Ruffle/ruffle"`，會把自己殺掉；
-  用 `pgrep -x ruffle`。
-- 部分顯卡要 `--graphics vulkan`，`--graphics gl` 可能連視窗都開不出來；清空
-  `WAYLAND_DISPLAY` 可避開另一條失敗的 surface 路徑。
-- 這個 SWF 用 `file://` 直開就行，不需要本機 HTTP server。
+* Win95/98 的遊戲是 16-bit NE，要靠 runner 裡的 `winevdm`（`soda-9.0-1` 有）。
+  XP 遊戲是 PE32，普通 64-bit prefix 就能跑。
+* `cards.dll` 要和遊戲世代對上——XP 牌背跟 Win95 不同，所以兩個世代分開兩個瓶子。
+* Wine 會把蓋著的牌畫成一條細線、踩地雷的 LED 數字畫成破圖方塊。純外觀問題，
+  遊戲本身完全可玩。
+* Wine 需要記憶體餘裕：機器快滿的時候視窗會無聲開不起來、`wineboot` 會卡住。
+  處理方式見指南的疑難排解段。
 
 ### 授權
 
-MIT，見 [LICENSE](LICENSE)。遊戲本體版權屬各自權利人，本 repo 不散布。
-
-## Classic Windows games (Win95/98 · XP · MSN Hexic)
-
-`win-game --list` lists every title; each entry maps to a bottle + original exe.
-
-| Game | Version | Status |
-|---|---|---|
-| Solitaire / FreeCell / Minesweeper / Hearts | Windows 95-98 (16-bit) | ✅ |
-| Solitaire / FreeCell / Minesweeper / Spider | Windows XP (32-bit) | ✅ |
-| Hearts (XP) | Windows XP | ⚠️ needs mfc42u.dll |
-| 3D Pinball Space Cadet | XP data + native engine | ✅ |
-| Hexic | MSN Flash original | ✅ patched SWF + Ruffle |
-
-Details, sources and known issues: [`docs/classic-win-games.md`](docs/classic-win-games.md)
-
-## 經典 Windows 遊戲（Win95/98 · XP · MSN Hexic）
-
-`win-game --list` 會列出全部；每個項目對應一個瓶子＋原版 exe。
-
-| 遊戲 | 版本 | 狀態 |
-|---|---|---|
-| 接龍 / 新接龍 / 踩地雷 / 傷心小棧 | Windows 95-98（16-bit） | ✅ |
-| 接龍 / 新接龍 / 踩地雷 / 連環新接龍 | Windows XP（32-bit） | ✅ |
-| 傷心小棧（XP） | Windows XP | ⚠️ 缺 mfc42u.dll |
-| ３Ｄ彈珠台 | XP 資料 + 原生引擎 | ✅ |
-| Hexic | MSN Flash 原版 | ✅ patch 過的 SWF + Ruffle |
-
-來源、安裝與已知問題：[`docs/classic-win-games.md`](docs/classic-win-games.md)
+MIT，見 [LICENSE](LICENSE)。遊戲執行檔的權利仍屬原發行商，本 repo **不** 散布。
