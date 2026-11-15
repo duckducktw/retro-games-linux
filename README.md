@@ -68,7 +68,7 @@ win-game --list          # every key, title, exe path, status
 win-game sol9x           # Win95/98 Solitaire
 win-game spiderxp        # XP Spider Solitaire
 pinball                  # 3D Pinball (native engine + original data)
-hexic                    # MSN Hexic
+hexic                    # MSN Hexic (saves progress, serves over http)
 ```
 
 Each game also gets a desktop entry, so it shows up in the application menu.
@@ -89,6 +89,7 @@ desktop/                  # .desktop templates
 docs/classic-win-games.md # full guide: sources, bottles, controls, troubleshooting
 docs/hexic-msn-patch.md   # Hexic SWF patch explained
 patch/hexic-msn/          # the four patched ActionScript files + apply.sh
+patch/hexic-save/         # save/load patch (SharedObject) + apply.sh
 ```
 
 ### Notes and gotchas
@@ -166,7 +167,7 @@ win-game --list          # 列出所有 key、名稱、路徑、狀態
 win-game sol9x           # Win95/98 接龍
 win-game spiderxp        # XP 連環新接龍
 pinball                  # ３Ｄ彈珠台（原生引擎 + 原版資料）
-hexic                    # MSN Hexic
+hexic                    # MSN Hexic（可存檔，走本機 http）
 ```
 
 每支遊戲都會裝一個桌面捷徑，開始選單裡也搜得到。同一支連點兩次不會開第二個，
@@ -186,6 +187,7 @@ desktop/                  # .desktop 範本
 docs/classic-win-games.md # 完整教學：來源、瓶子、按鍵、疑難排解
 docs/hexic-msn-patch.md   # Hexic SWF patch 說明
 patch/hexic-msn/          # 四個改過的 ActionScript 檔＋apply.sh
+patch/hexic-save/         # 存檔／讀檔 patch（SharedObject）＋apply.sh
 ```
 
 ### 注意事項

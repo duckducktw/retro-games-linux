@@ -1,18 +1,42 @@
 #!/usr/bin/env bash
-# MSN 原版 Hexic（旋轉泡泡球）— Ruffle 原生執行，已 patch 掉 MSN 主機握手
+# Hexic (MSN original SWF) launcher — serves the SWF over local HTTP so that
+# Ruffle can use SharedObject (save/load). http:// is required: Ruffle rejects
+# SharedObject for file:// movies.
 set -u
-DIR="${HEXIC_DIR:-$HOME/Applications/Hexic}"
-RUFFLE="${RUFFLE_BIN:-$HOME/Applications/Ruffle/ruffle}"
-export DISPLAY="${DISPLAY:-:0}"
 
-# 已在跑就把視窗叫回前景，不要開第二個
-if pgrep -x ruffle >/dev/null 2>&1; then
-    WID=$(xdotool search --name "Ruffle" 2>/dev/null | head -1)
-    if [ -n "$WID" ]; then
-        xdotool windowactivate --sync "$WID" 2>/dev/null
-        xdotool windowraise "$WID" 2>/dev/null
-        exit 0
-    fi
+GAME_DIR="${HEXIC_DIR:-$HOME/Applications/Hexic}"
+SWF="Hexic2.save4.swf"
+RUFFLE="${RUFFLE_BIN:-$HOME/Applications/Ruffle/ruffle}"
+SAVE_DIR="$HOME/.local/share/ruffle/SharedObjects/127.0.0.1/$SWF"
+
+if [ "${1:-}" = "--reset" ]; then
+  rm -rf "$SAVE_DIR"
+  echo "已清除存檔：$SAVE_DIR"
+  exit 0
 fi
 
-exec env WAYLAND_DISPLAY= "$RUFFLE" --graphics vulkan "$DIR/Hexic2.swf" "$@"
+# 單實例：已有 Hexic 在跑就不重開
+if xdotool search --name "Ruffle - Hexic" >/dev/null 2>&1; then
+  echo "Hexic 已在執行中"
+  exit 0
+fi
+
+# 啟動本機 HTTP 伺服器（SWF 需經 http:// 載入才能寫 SharedObject）
+PORT=""
+for p in $(seq 8765 8795); do
+  if ! curl -s -o /dev/null --max-time 1 "http://127.0.0.1:$p/"; then
+    PORT="$p"; break
+  fi
+done
+[ -z "$PORT" ] && { echo "找不到可用的本機埠號"; exit 1; }
+
+( cd "$GAME_DIR" && exec python3 -m http.server "$PORT" --bind 127.0.0.1 >/dev/null 2>&1 ) &
+SRV_PID=$!
+trap 'kill $SRV_PID 2>/dev/null' EXIT
+
+for _ in $(seq 1 20); do
+  curl -s -o /dev/null --max-time 1 "http://127.0.0.1:$PORT/" && break
+  sleep 0.2
+done
+
+exec env WAYLAND_DISPLAY= "$RUFFLE" --graphics vulkan "http://127.0.0.1:$PORT/$SWF"

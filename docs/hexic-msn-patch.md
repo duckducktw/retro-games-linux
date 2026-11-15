@@ -82,7 +82,43 @@ HEXIC_DIR=~/Applications/Hexic ~/.local/bin/hexic
 ```
 
 Ruffle with `--graphics vulkan` (the `gl` backend sometimes opens no window) and
-an empty `WAYLAND_DISPLAY`. `file://` works — no local HTTP server needed.
+an empty `WAYLAND_DISPLAY`. Without the save patch `file://` is fine; with it the
+movie must be served over `http://` (see below).
+
+### Save / load patch (`patch/hexic-save`)
+
+The MSN build cannot save anything: exporting all 62 scripts turns up no
+`SharedObject` call at all. Progress lived on zone.msn.com, pushed there by
+`fscommand("SessionUpdate"/"GameEnd"/"GameBreak")` to the gameplayer shell, so
+every launch starts at Level 1 with 0 points.
+
+`patch/hexic-save` adds a local save on top of the handshake patch, using the
+AVM1 SharedObject `hexic_save`:
+
+| Script | Role |
+| --- | --- |
+| `frame_6/DoAction.as` | splash: read `hexic_save` into `_root._SavedLevel` / `_SavedScore` |
+| `frame_13/PlaceObject2_215_128` | Resume Game button: enabled when a save exists, restores `_InitialLevel` and `_Score` before `gotoAndStop("Active")` |
+| `frame_146/DoAction.as`, `frame_153/DoAction.as` | level-up transition frames: write `_Level` / `_Score`, then `flush()` |
+
+Things that bite:
+
+- **Both** `frame_146` and `frame_153` run during the level-up animation. Patching
+  only `frame_153` silently never saves.
+- `createEmptyMovieClip()` depth must stay inside the AVM1 range (-16383..16383).
+  `98765` is ignored without an error, so the one-frame score restore never ran;
+  use `16000`.
+- The LSO lands in
+  `~/.local/share/ruffle/SharedObjects/127.0.0.1/<movie name>/hexic_save.sol`.
+  The directory is keyed by the movie **file name**, so renaming the SWF starts
+  with an empty save.
+- `file://` is not usable: Ruffle refuses SharedObject there with
+  `SharedObject.get_local: Invalid path with .. segments`. Serve the folder over
+  HTTP — that is exactly what `bin/hexic` does (and it picks a free port).
+- Verified: a save with `_Level=3 / _Score=5000` resumes as Level 4 (the HUD shows
+  `_Level + 1`) with exactly 5000 points, and the score stays put while idle.
+  Resuming at a very high level (8+) makes the score run away — those level
+  tables do not expect to be entered that way, so treat such saves as throwaway.
 
 ### Known issues
 
@@ -169,7 +205,36 @@ HEXIC_DIR=~/Applications/Hexic ~/.local/bin/hexic
 ```
 
 Ruffle 加 `--graphics vulkan`（`gl` 後帶有時連視窗都開不出來），並清空
-`WAYLAND_DISPLAY`。`file://` 直開就行，不需要本機 HTTP server。
+`WAYLAND_DISPLAY`。沒套存檔 patch 時 `file://` 直開就行；套了之後必須走 `http://`（見下）。
+
+### 存檔 patch（`patch/hexic-save`）
+
+MSN 版完全不能存檔：把 62 個腳本全匯出，`SharedObject` 一次都沒出現。以前進度是送到
+zone.msn.com 的 gameplayer 外殼（靠 `fscommand("SessionUpdate"/"GameEnd"/"GameBreak")`），
+所以每次啟動都是第 1 關、0 分。
+
+`patch/hexic-save` 在握手 patch 之上加了本機存檔，用 AVM1 的 SharedObject `hexic_save`：
+
+| 腳本 | 作用 |
+| --- | --- |
+| `frame_6/DoAction.as` | splash：讀 `hexic_save` 到 `_root._SavedLevel` / `_SavedScore` |
+| `frame_13/PlaceObject2_215_128` | Resume Game 按鈕：有存檔就啟用，`gotoAndStop("Active")` 前還原 `_InitialLevel` 與 `_Score` |
+| `frame_146/DoAction.as`、`frame_153/DoAction.as` | 升級轉場 frame：寫入 `_Level` / `_Score` 並 `flush()` |
+
+幾個坑：
+
+- 升級動畫會經過 **`frame_146` 和 `frame_153` 兩個** frame。只改 `frame_153` 的話，
+  永遠不會真的存檔。
+- `createEmptyMovieClip()` 的深度必須在 AVM1 範圍內（-16383..16383）。寫 `98765`
+  不會報錯但會被忽略，於是那一 frame 的分數還原根本沒跑；用 `16000`。
+- LSO 會落在 `~/.local/share/ruffle/SharedObjects/127.0.0.1/<檔名>/hexic_save.sol`。
+  資料夾是綁**檔名**的，SWF 改個名字就等於換一份空存檔。
+- `file://` 不能用：Ruffle 會擋 SharedObject，錯誤是
+  `SharedObject.get_local: Invalid path with .. segments`。要改用 HTTP 提供目錄——
+  `bin/hexic` 就是這樣做（會自動找空的埠號）。
+- 實測：存 `_Level=3 / _Score=5000`，續玩會回到第 4 關（HUD 顯示 `_Level + 1`）、
+  分數正好 5000，放著不動也不會亂跳。但從很高的關卡（8 以上）續玩分數會失控暴增，
+  那些關卡表本來就不預期這樣被進入，這種存檔當作免洗即可。
 
 ### 已知問題
 
