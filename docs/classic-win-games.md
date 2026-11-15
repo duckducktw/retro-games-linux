@@ -25,7 +25,7 @@ plus the original MSN **Hexic** Flash game through Ruffle (see `hexic-msn-patch.
 | `winminexp` | Minesweeper | Windows XP | WinXPGames | ✅ works |
 | `spiderxp` | Spider Solitaire | Windows XP | WinXPGames | ✅ works |
 | `heartsxp` | Hearts | Windows XP | WinXPGames | ⚠️ needs `mfc42u.dll` (Unicode MFC 4.2) |
-| `pinballexp` | 3D Pinball – Space Cadet | Windows XP | WinXPGames | ⚠️ starts, never maps a window |
+| — | 3D Pinball – Space Cadet | Windows XP data | native `bin/pinball` | ✅ works (SpaceCadetPinball engine) |
 
 ### Why two bottles
 
@@ -69,10 +69,15 @@ win-game --list
 * **`heartsxp`** — XP Hearts links MFC42u (Unicode). Drop a 32-bit `mfc42u.dll` into the
   bottle's `drive_c/windows/syswow64/` and it should start. XP's own copy lives in
   `system32` of an XP install.
-* **`pinballexp`** — the exe runs, registry keys
-  (`HKLM\Software\Microsoft\Plus!\The Microsoft Plus! for Windows XP`) are set, but it
-  never creates a visible window. 3D Pinball needs DirectDraw + its table resource loaded
-  through the Plus! registry; unresolved here.
+* **3D Pinball** — the original `PINBALL.EXE` runs under Wine (it even writes its Plus!
+  registry keys) but **never creates a window**, with no error output at all. Instead we
+  use [SpaceCadetPinball](https://github.com/k4zmu2a/SpaceCadetPinball) 2.1.0 (Windows
+  x64 build under Wine), a re-implementation that loads the **original** `PINBALL.DAT`,
+  MIDI and WAV assets — identical table, art and physics. `bin/pinball` handles the
+  unmapped-window quirk (the SDL window starts unmapped; the launcher maps + activates it).
+
+  Required data files (all from the XP `PINBALL` folder): `PINBALL.DAT`, `FONT.DAT`,
+  `PINBALL.MID`, `PINBALL2.MID`, `SOUND*.WAV`.
 * **Win98 game files** — a Win98 mirror of the 16-bit `SOL.EXE` (different MD5 from the
   Win95 build) creates a 111×1 off-screen window under `winevdm` in soda-9. Bottle runs
   the Win95/98 build instead; results are identical in practice.
@@ -82,7 +87,8 @@ win-game --list
 
 ```
 games.tsv                 # key, bottle, exe, titles, status
-bin/win-game              # generic launcher (-–list)
+bin/win-game              # generic launcher (--list)
+bin/pinball               # 3D Pinball (native engine + original data)
 install.sh                # installs launcher + .desktop entries per game
 setup/build-bottles.sh    # creates bottles, copies game files from <sources-dir>
 ```
@@ -111,7 +117,7 @@ setup/build-bottles.sh    # creates bottles, copies game files from <sources-dir
 | `winminexp` | 踩地雷 | Windows XP | WinXPGames | ✅ 可玩 |
 | `spiderxp` | 連環新接龍 | Windows XP | WinXPGames | ✅ 可玩 |
 | `heartsxp` | 傷心小棧 | Windows XP | WinXPGames | ⚠️ 缺 `mfc42u.dll` |
-| `pinballexp` | ３Ｄ彈珠台 | Windows XP | WinXPGames | ⚠️ 起得來但沒有視窗 |
+| — | ３Ｄ彈珠台 | Windows XP 資料 | 原生 `bin/pinball` | ✅ 可玩（SpaceCadetPinball 引擎） |
 
 ### 為什麼要兩個瓶子
 
@@ -154,9 +160,15 @@ win-game --list
 
 * **`heartsxp`** — XP 版傷心小棧連到 MFC42u（Unicode 版）。把 32-bit `mfc42u.dll` 丟進
   瓶子的 `drive_c/windows/syswow64/` 就能起來（XP 安裝片的 `system32` 裡有）。
-* **`pinballexp`** — exe 有跑、Plus! 機碼也寫了
-  （`HKLM\Software\Microsoft\Plus!\The Microsoft Plus! for Windows XP`），但就是不開視窗。
-  ３Ｄ彈珠台要 DirectDraw 加上從 Plus! 機碼載入球檯資源，這條未解。
+* **３Ｄ彈珠台** — 原版 `PINBALL.EXE` 在 Wine 下會跑（連 Plus! 機碼都寫進去了），但
+  **完全不開視窗**，而且一個錯誤訊息都沒有。改用
+  [SpaceCadetPinball](https://github.com/k4zmu2a/SpaceCadetPinball) 2.1.0（Windows x64
+  版跑在 Wine 裡）——它是重新實作的引擎，讀的是**原版** `PINBALL.DAT`、MIDI 與 WAV，
+  球檯、圖像、物理都一樣。`bin/pinball` 另外處理「SDL 視窗一開始是 unmapped」這個怪癖
+  （啟動後會自動 map + 叫到前景）。
+
+  需要的資料檔（全在 XP 的 `PINBALL` 資料夾）：`PINBALL.DAT`、`FONT.DAT`、
+  `PINBALL.MID`、`PINBALL2.MID`、`SOUND*.WAV`。
 * **Win98 檔案** — 另一個鏡像的 16-bit `SOL.EXE`（MD5 與 Win95 版不同）在 soda-9 的
   `winevdm` 下只會產生 111×1 的視窗外框。實務上直接用 Win95/98 build，玩起來一樣。
 * 單實例：同一個瓶子＋同一支 exe 已在跑時，`win-game` 不會再開一個。

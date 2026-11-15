@@ -8,4 +8,3 @@ freecellxp	WinXPGames	C:\XPgames\CARDS\freecell.exe	FreeCell	新接龍	Windows X
 winminexp	WinXPGames	C:\XPgames\MINESWEEPER\winmine.exe	Minesweeper	踩地雷	Windows XP (32-bit)	verified
 spiderxp	WinXPGames	C:\XPgames\CARDS\spider.exe	Spider Solitaire	連環新接龍	Windows XP (32-bit)	verified
 heartsxp	WinXPGames	C:\XPgames\CARDS\mshearts.exe	Hearts	傷心小棧	Windows XP (32-bit)	needs mfc42u.dll
-pinballexp	WinXPGames	C:\XPgames\PINBALL\PINBALL.EXE	3D Pinball Space Cadet	３Ｄ彈珠台	Windows XP (32-bit)	no window yet

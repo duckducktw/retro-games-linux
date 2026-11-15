@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=３Ｄ彈珠台 (3D Pinball Space Cadet)
+Name[en]=3D Pinball Space Cadet
+Comment=Windows XP original game data + native engine
+Exec=/home/user/.local/bin/pinball
+Icon=applications-games
+Terminal=false
+Categories=Game;ArcadeGame;
+StartupNotify=false

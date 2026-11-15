@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# ３Ｄ彈珠台 Space Cadet（原版資料 + 原生重新實作引擎 SpaceCadetPinball）
+# 原版 PINBALL.EXE 在 Wine 下開不出視窗，所以改用讀同一份原版資料的引擎。
+set -u
+DIR="$HOME/Applications/Pinball"
+RUNNER="$HOME/.var/app/com.usebottles.bottles/data/bottles/runners/soda-9.0-1/bin/wine"
+PREFIX="$HOME/.var/app/com.usebottles.bottles/data/bottles/bottles/WinXPGames"
+TITLE="3D Pinball"
+
+# 已在跑就只把視窗叫回前景（用 xdotool 找視窗，不用 pgrep 免得比對到自己的指令列）
+WIN=$(xdotool search --name "$TITLE" 2>/dev/null | head -1)
+if [ -n "${WIN:-}" ]; then
+    xdotool windowmap "$WIN" 2>/dev/null
+    xdotool windowactivate "$WIN" 2>/dev/null
+    exit 0
+fi
+
+cd "$DIR" || exit 1
+export DISPLAY="${DISPLAY:-:0}"
+export WINEPREFIX="$PREFIX"
+nohup "$RUNNER" ./SpaceCadetPinball.exe >/tmp/pinball.log 2>&1 &
+
+# SDL 視窗剛建立時常常是 unmapped，等它出現再叫到前景
+for i in $(seq 1 40); do
+    sleep 1
+    WIN=$(xdotool search --name "$TITLE" 2>/dev/null | head -1)
+    if [ -n "${WIN:-}" ]; then
+        xdotool windowmap "$WIN" 2>/dev/null
+        xdotool windowactivate "$WIN" 2>/dev/null
+        break
+    fi
+done
